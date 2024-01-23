@@ -11,23 +11,18 @@ import com.hacheery.ecommercebackend.security.repository.UserRepository;
 import com.hacheery.ecommercebackend.service.UserService;
 import com.hacheery.ecommercebackend.specification.UserSpecification;
 import io.micrometer.common.util.StringUtils;
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.AuthorizationServiceException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.Objects;
 
 @Service
@@ -35,7 +30,6 @@ import java.util.Objects;
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UploadServiceImpl uploadService;
-    private final JavaMailSender mailSender;
     @Override
     @Transactional
     public User createUser(@CurrentUser User currentUser, User user, MultipartFile file) {
@@ -59,12 +53,10 @@ public class UserServiceImpl implements UserService {
             String imageUrl = parts[parts.length-1].split("=")[1].trim();
             imageUrl = imageUrl.substring(0, imageUrl.length()-1);
             user.setImgUrl(imageUrl);
-            User newUser = userRepository.save(user);
-            sendVerificationEmail(user);
-            return newUser;
+            return userRepository.save(user);
         } catch (DataIntegrityViolationException e) {
             throw new SQLException("Lỗi lưu danh mục vào cơ sở dữ liệu", e);
-        } catch (IOException | MessagingException e) {
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
@@ -108,41 +100,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void deleteUser(Long userId) {
-
     }
 
     @Override
     public void deleteUsers() {
         userRepository.deleteAll();
-    }
-
-    private void sendVerificationEmail(User user)
-            throws MessagingException, UnsupportedEncodingException {
-        String toAddress = user.getEmail();
-        String fromAddress = "Your email address";
-        String senderName = "Your company name";
-        String subject = "Please verify your registration";
-        String content = "Dear [[name]],<br>"
-                + "Please click the link below to verify your registration:<br>"
-                + "<h3><a href=\"[[URL]]\" target=\"_self\">VERIFY</a></h3>"
-                + "Thank you,<br>"
-                + "Your company name.";
-
-        MimeMessage message = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message);
-
-        helper.setFrom(fromAddress, senderName);
-        helper.setTo(toAddress);
-        helper.setSubject(subject);
-
-        content = content.replace("[[name]]", user.getName());
-        String verifyURL = "localhost:8080" + "/verify?code=" + user.getVerificationCode();
-
-        content = content.replace("[[URL]]", verifyURL);
-
-        helper.setText(content, true);
-
-        mailSender.send(message);
-
     }
 }
