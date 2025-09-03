@@ -1,0 +1,39 @@
+{
+  "info": {
+    "name": "Ecommerce API",
+    "_postman_id": "ecommerce-backend-test",
+    "description": "Postman collection for Ecommerce backend with Kafka",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create Order",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": 1,\n  \"customerName\": \"Nguyen Van A\",\n  \"shippingAddress\": \"Hanoi\",\n  \"phoneNumber\": \"0123456789\",\n  \"items\": {\n    \"101\": 2,\n    \"102\": 1\n  }\n}"
+        },
+        "url": {
+          "raw": "http://localhost:9000/api/orders",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "9000",
+          "path": [
+            "api",
+            "orders"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
