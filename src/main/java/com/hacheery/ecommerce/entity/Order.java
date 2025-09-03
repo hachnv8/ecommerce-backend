@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "orders")
@@ -32,6 +34,18 @@ public class Order {
 
     private LocalDateTime createdAt;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<OrderItem> items;
+    private String listItemId;
+
+    @Transient
+    public List<Long> getItemIdList() {
+        if (listItemId == null || listItemId.isEmpty()) return List.of();
+        return Arrays.stream(listItemId.split(","))
+                .map(Long::parseLong)
+                .toList();
+    }
+
+    @Transient
+    public void setItemIdList(List<Long> itemIdList) {
+        this.listItemId = itemIdList.stream().map(String::valueOf).collect(Collectors.joining(","));
+    }
 }

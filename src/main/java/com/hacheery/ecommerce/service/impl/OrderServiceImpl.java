@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -38,11 +39,11 @@ public class OrderServiceImpl implements com.hacheery.ecommerce.service.OrderSer
                     .bookId(bookId)
                     .quantity(qty)
                     .price(0) // TODO: sau này lấy từ BookService
-                    .order(order)
+                    .orderId(order.getId())
                     .build();
             items.add(item);
         });
-        order.setItems(items);
+        order.setItemIdList(items.stream().map(OrderItem::getId).collect(Collectors.toList()));
 
         // Lưu DB
         Order savedOrder = orderRepository.save(order);
