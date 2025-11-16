@@ -1,12 +1,12 @@
 package com.hacheery.ecommerce.security.service.impl;
 
-
 import com.hacheery.ecommerce.security.dto.UserDto;
 import com.hacheery.ecommerce.security.entity.User;
 import com.hacheery.ecommerce.security.mapper.UserMapper;
 import com.hacheery.ecommerce.security.repository.UserRepository;
 import com.hacheery.ecommerce.security.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -36,7 +36,7 @@ public class UserServiceImpl implements UserService {
         User existingUser = userRepository.findById(userId).orElse(null);
         if (existingUser != null) {
             existingUser.setUsername(user.getUsername());
-//            existingUser.setPassword(user.getPassword());
+            existingUser.setPassword(user.getPassword());
             existingUser.setEmail(user.getEmail());
             existingUser.setFullName(user.getFullName());
             return userRepository.save(existingUser);
@@ -47,7 +47,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto findByUsername(String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UsernameNotFoundException("Username not found"));
         return UserMapper.mapToUserDto(user);
     }
 

@@ -1,5 +1,6 @@
 package com.hacheery.ecommerce.security.service.impl;
 
+import com.hacheery.ecommerce.exception.DuplicateResourceException;
 import com.hacheery.ecommerce.security.entity.Role;
 import com.hacheery.ecommerce.security.entity.User;
 import com.hacheery.ecommerce.security.mapper.UserMapper;
@@ -29,6 +30,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public AuthenticationResponse register(RegisterRequest request) {
+        // Kiểm tra email đã tồn tại chưa
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new DuplicateResourceException("Email already exists");
+        }
+
         User newUser = new User();
         newUser.setUsername(request.getUsername());
         newUser.setPassword(passwordEncoder.encode(request.getPassword()));
