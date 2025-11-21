@@ -10,12 +10,12 @@ import com.hacheery.ecommerce.security.payload.RegisterRequest;
 import com.hacheery.ecommerce.security.repository.UserRepository;
 import com.hacheery.ecommerce.security.service.AuthenticationService;
 import com.hacheery.ecommerce.service.MailService;
+import com.hacheery.ecommerce.utils.OtpUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import utils.OtpUtil;
 
 import java.time.Instant;
 

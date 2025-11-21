@@ -1,4 +1,4 @@
-package utils;
+package com.hacheery.ecommerce.utils;
 
 import java.util.Random;
 
