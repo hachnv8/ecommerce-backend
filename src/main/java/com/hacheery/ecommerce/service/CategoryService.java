@@ -1,5 +1,6 @@
 package com.hacheery.ecommerce.service;
 
+import com.hacheery.ecommerce.dto.CategoryDTO;
 import com.hacheery.ecommerce.dto.CategoryTreeDTO;
 import com.hacheery.ecommerce.entity.Category;
 import com.hacheery.ecommerce.exception.ResourceNotFoundException;
@@ -16,56 +17,97 @@ public class CategoryService {
 
     private final CategoryRepository categoryRepository;
 
-    // Lấy category theo id, nếu không có sẽ throw ResourceNotFoundException
-    public Category getCategoryById(Long id) {
-        return categoryRepository.findById(id)
+    public CategoryDTO getCategoryById(Long id) {
+        Category category = categoryRepository.findById(id)
                 .filter(Category::getIsActive)
                 .orElseThrow(() -> new ResourceNotFoundException("Category with id " + id + " not found"));
+        return toCategoryDTO(category);
     }
 
-    // Lấy cây category active
-    public List<Category> getCategoryTree() {
+    public List<CategoryTreeDTO> getCategoryTree() {
         List<Category> allCategories = categoryRepository.findAll()
                 .stream()
                 .filter(Category::getIsActive)
                 .toList();
 
-        Map<Long, Category> map = new HashMap<>();
-        for (Category cat : allCategories) {
-            map.put(cat.getId(), cat);
-            cat.setChildren(new HashSet<>());
-        }
+        Map<Long, CategoryTreeDTO> categoryMap = new HashMap<>();
+        List<CategoryTreeDTO> roots = new ArrayList<>();
 
-        List<Category> roots = new ArrayList<>();
         for (Category cat : allCategories) {
-            if (cat.getParent() != null && map.containsKey(cat.getParent().getId())) {
-                map.get(cat.getParent().getId()).getChildren().add(cat);
-            } else {
-                roots.add(cat);
+            CategoryTreeDTO dto = new CategoryTreeDTO(
+                    cat.getId(),
+                    cat.getName(),
+                    cat.getDescription(),
+                    cat.getSlug(),
+                    cat.getIsActive(),
+                    new ArrayList<>()
+            );
+            categoryMap.put(cat.getId(), dto);
+            if (cat.getParent() == null) {
+                roots.add(dto);
             }
         }
+
+        for (Category cat : allCategories) {
+            if (cat.getParent() != null) {
+                CategoryTreeDTO parentDTO = categoryMap.get(cat.getParent().getId());
+                if (parentDTO != null) {
+                    parentDTO.getChildren().add(categoryMap.get(cat.getId()));
+                }
+            }
+        }
+
         return roots;
     }
 
-    // Tạo mới category (set isActive true)
-    public Category createCategory(Category category) {
-        category.setIsActive(true);
-        return categoryRepository.save(category);
+    public List<CategoryDTO> getAllCategories() {
+        return categoryRepository.findAll()
+                .stream()
+                .filter(Category::getIsActive)
+                .map(this::toCategoryDTO)
+                .collect(Collectors.toList());
     }
 
-    // Cập nhật category, nếu không tìm thấy trả lỗi
-    public Category updateCategory(Long id, Category updated) {
+    // Tạo mới category từ DTO, trả về DTO
+    public CategoryDTO createCategory(CategoryDTO dto) {
+        Category category = new Category();
+        category.setName(dto.getName());
+        category.setDescription(dto.getDescription());
+        category.setSlug(dto.getSlug());
+        category.setIsActive(true);
+
+        if (dto.getParentId() != null) {
+            Category parent = categoryRepository.findById(dto.getParentId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Parent category with id " + dto.getParentId() + " not found"));
+            category.setParent(parent);
+        }
+
+        Category saved = categoryRepository.save(category);
+        return toCategoryDTO(saved);
+    }
+
+    // Cập nhật category từ DTO, trả về DTO
+    public CategoryDTO updateCategory(Long id, CategoryDTO dto) {
         Category existing = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category with id " + id + " not found"));
-        existing.setName(updated.getName());
-        existing.setDescription(updated.getDescription());
-        existing.setSlug(updated.getSlug());
-        existing.setParent(updated.getParent());
-        existing.setIsActive(updated.getIsActive());
-        return categoryRepository.save(existing);
+
+        existing.setName(dto.getName());
+        existing.setDescription(dto.getDescription());
+        existing.setSlug(dto.getSlug());
+        existing.setIsActive(dto.getIsActive());
+
+        if (dto.getParentId() != null) {
+            Category parent = categoryRepository.findById(dto.getParentId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Parent category with id " + dto.getParentId() + " not found"));
+            existing.setParent(parent);
+        } else {
+            existing.setParent(null);
+        }
+
+        Category saved = categoryRepository.save(existing);
+        return toCategoryDTO(saved);
     }
 
-    // Soft delete category nếu có, nếu không throw lỗi
     public void softDeleteCategory(Long id) {
         Category cat = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category with id " + id + " not found"));
@@ -73,28 +115,17 @@ public class CategoryService {
         categoryRepository.save(cat);
     }
 
-    // Phương thức đệ quy để xây dựng cây Category DTO gây ra N+1 query
-    public List<CategoryTreeDTO> getCategoryTreeRecursive() {
-        // Lấy danh sách category gốc (không có parent)
-        List<Category> rootCategories = categoryRepository.findByParentId(null)
-                .stream().filter(Category::getIsActive)
-                .toList();
-
-        return rootCategories.stream().map(this::toCategoryTreeDTO)
-                .toList();
-    }
-
-    private CategoryTreeDTO toCategoryTreeDTO(Category category) {
-        List<CategoryTreeDTO> children = categoryRepository.findByParentId(category.getId())
-                .stream()
-                .filter(Category::getIsActive)
-                .map(this::toCategoryTreeDTO)
-                .toList();
-        return new CategoryTreeDTO(category.getId(),
+    // Helper chuyển entity sang DTO
+    public CategoryDTO toCategoryDTO(Category category) {
+        return new CategoryDTO(
+                category.getId(),
                 category.getName(),
                 category.getDescription(),
                 category.getSlug(),
                 category.getIsActive(),
-                children);
+                category.getParent() != null ? category.getParent().getId() : null,
+                category.getCreatedAt(),
+                category.getUpdatedAt()
+        );
     }
 }

@@ -1,7 +1,8 @@
 package com.hacheery.ecommerce.controller;
 
 import com.hacheery.ecommerce.dto.BaseResponseDTO;
-import com.hacheery.ecommerce.entity.Category;
+import com.hacheery.ecommerce.dto.CategoryDTO;
+import com.hacheery.ecommerce.dto.CategoryTreeDTO;
 import com.hacheery.ecommerce.service.CategoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,11 +21,11 @@ public class CategoryController {
 
     private final CategoryService categoryService;
 
-    // Lấy toàn bộ cây category (public)
+    // GET /api/categories - danh sách phẳng CategoryDTO (public)
     @GetMapping
-    public ResponseEntity<BaseResponseDTO<List<Category>>> getAllCategories() {
-        List<Category> categories = categoryService.getCategoryTree();
-        BaseResponseDTO<List<Category>> response = new BaseResponseDTO<>(
+    public ResponseEntity<BaseResponseDTO<List<CategoryDTO>>> getAllCategories() {
+        List<CategoryDTO> categories = categoryService.getAllCategories();
+        BaseResponseDTO<List<CategoryDTO>> response = new BaseResponseDTO<>(
                 HttpStatus.OK.value(),
                 "Success",
                 categories,
@@ -34,11 +35,11 @@ public class CategoryController {
         return ResponseEntity.ok(response);
     }
 
-    // Lấy category theo id (public)
+    // GET /api/categories/{id} - 1 CategoryDTO (public)
     @GetMapping("/{id}")
-    public ResponseEntity<BaseResponseDTO<Category>> getCategoryById(@PathVariable Long id) {
-        Category category = categoryService.getCategoryById(id);
-        BaseResponseDTO<Category> response = new BaseResponseDTO<>(
+    public ResponseEntity<BaseResponseDTO<CategoryDTO>> getCategoryById(@PathVariable Long id) {
+        CategoryDTO category = categoryService.getCategoryById(id);
+        BaseResponseDTO<CategoryDTO> response = new BaseResponseDTO<>(
                 HttpStatus.OK.value(),
                 "Category found",
                 category,
@@ -48,37 +49,54 @@ public class CategoryController {
         return ResponseEntity.ok(response);
     }
 
-    // Tạo mới category (ADMIN)
-    @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<BaseResponseDTO<Category>> createCategory(@RequestBody Category category) {
-        Category created = categoryService.createCategory(category);
-        BaseResponseDTO<Category> response = new BaseResponseDTO<>(
-                HttpStatus.CREATED.value(),
-                "Category created",
-                created,
-                LocalDateTime.now(),
-                null
-        );
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
-
-    // Cập nhật category (ADMIN)
-    @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<BaseResponseDTO<Category>> updateCategory(@PathVariable Long id, @RequestBody Category category) {
-        Category updated = categoryService.updateCategory(id, category);
-        BaseResponseDTO<Category> response = new BaseResponseDTO<>(
+    // GET /api/categories/tree - cây CategoryTreeDTO (public)
+    @GetMapping("/tree")
+    public ResponseEntity<BaseResponseDTO<List<CategoryTreeDTO>>> getCategoryTree() {
+        List<CategoryTreeDTO> tree = categoryService.getCategoryTree();
+        BaseResponseDTO<List<CategoryTreeDTO>> response = new BaseResponseDTO<>(
                 HttpStatus.OK.value(),
-                "Category updated",
-                updated,
+                "Category tree retrieved successfully",
+                tree,
                 LocalDateTime.now(),
                 null
         );
         return ResponseEntity.ok(response);
     }
 
-    // Soft delete category (ADMIN)
+    // POST /api/categories - tạo Category, trả về CategoryDTO (ADMIN)
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<BaseResponseDTO<CategoryDTO>> createCategory(@RequestBody CategoryDTO categoryDTO) {
+        CategoryDTO createdDTO = categoryService.createCategory(categoryDTO);
+        BaseResponseDTO<CategoryDTO> response = new BaseResponseDTO<>(
+                HttpStatus.CREATED.value(),
+                "Category created",
+                createdDTO,
+                LocalDateTime.now(),
+                null
+        );
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    // PUT /api/categories/{id} - cập nhật Category, trả về CategoryDTO (ADMIN)
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<BaseResponseDTO<CategoryDTO>> updateCategory(
+            @PathVariable Long id,
+            @RequestBody CategoryDTO categoryDTO
+    ) {
+        CategoryDTO updatedDTO = categoryService.updateCategory(id, categoryDTO);
+        BaseResponseDTO<CategoryDTO> response = new BaseResponseDTO<>(
+                HttpStatus.OK.value(),
+                "Category updated",
+                updatedDTO,
+                LocalDateTime.now(),
+                null
+        );
+        return ResponseEntity.ok(response);
+    }
+
+    // DELETE /api/categories/{id} - soft delete (ADMIN)
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<BaseResponseDTO<Void>> softDeleteCategory(@PathVariable Long id) {
@@ -93,4 +111,3 @@ public class CategoryController {
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body(response);
     }
 }
-
