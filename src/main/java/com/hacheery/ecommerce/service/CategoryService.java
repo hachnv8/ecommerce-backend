@@ -3,6 +3,8 @@ package com.hacheery.ecommerce.service;
 import com.hacheery.ecommerce.dto.CategoryDTO;
 import com.hacheery.ecommerce.dto.CategoryTreeDTO;
 import com.hacheery.ecommerce.entity.Category;
+import com.hacheery.ecommerce.exception.BadRequestException;
+import com.hacheery.ecommerce.exception.DuplicateResourceException;
 import com.hacheery.ecommerce.exception.ResourceNotFoundException;
 import com.hacheery.ecommerce.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;
@@ -70,6 +72,23 @@ public class CategoryService {
 
     // Tạo mới category từ DTO, trả về DTO
     public CategoryDTO createCategory(CategoryDTO dto) {
+        // Validate dữ liệu
+        if (dto.getName() == null || dto.getName().trim().isEmpty()) {
+            throw new BadRequestException("Category name cannot be empty");
+        }
+
+        if (dto.getDescription() == null || dto.getDescription().trim().isEmpty()) {
+            throw new BadRequestException("Category description cannot be empty");
+        }
+
+        if (dto.getSlug() == null || dto.getSlug().trim().isEmpty()) {
+            throw new BadRequestException("Slug không được để trống");
+        }
+
+        if (categoryRepository.existsBySlug(dto.getSlug())) {
+            throw new DuplicateResourceException("Slug '" + dto.getSlug() + "' đã tồn tại");
+        }
+
         Category category = new Category();
         category.setName(dto.getName());
         category.setDescription(dto.getDescription());
