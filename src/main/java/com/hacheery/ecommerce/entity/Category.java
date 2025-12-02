@@ -10,7 +10,13 @@ import java.util.Set;
 
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@Table(name = "categories")
+@Table(name = "categories", indexes = {
+        @Index(name = "idx_category_slug", columnList = "slug"),
+        @Index(name = "idx_category_name", columnList = "name"),
+        @Index(name = "idx_category_active", columnList = "is_active"),
+        @Index(name = "idx_category_parent", columnList = "parent_id"),
+        @Index(name = "idx_category_parent_active", columnList = "parent_id, is_active")
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
