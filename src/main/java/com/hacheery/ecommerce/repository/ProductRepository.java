@@ -22,9 +22,9 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findByCategoryIdAndIsActive(Long categoryId, Boolean isActive);
 
     // Tìm theo seller
-    List<Product> findBySeller_UserId(Long sellerId);
+    List<Product> findBySeller_Id(Long sellerId);
 
-    List<Product> findBySeller_UserIdAndIsActive(Long sellerId, Boolean isActive);
+    List<Product> findBySeller_IdAndIsActive(Long sellerId, Boolean isActive);
 
     // Tìm theo trạng thái
     List<Product> findByIsActive(Boolean isActive);
@@ -67,6 +67,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Long countByCategoryId(@Param("categoryId") Long categoryId);
 
     // Count products by seller
-    @Query("SELECT COUNT(p) FROM Product p WHERE p.seller.userId = :sellerId")
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.seller.id = :sellerId")
     Long countBySellerId(@Param("sellerId") Long sellerId);
 }
